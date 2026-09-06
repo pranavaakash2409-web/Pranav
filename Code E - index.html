@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GridGuard AI - Live Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; text-align: center; }
+        .val { font-size: 28px; font-weight: bold; margin-top: 10px; color: #00e676; }
+        .status-box { background: #1e1e1e; padding: 25px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .status-title { font-size: 36px; font-weight: bold; }
+        .btn-group { display: flex; justify-content: center; gap: 20px; }
+        button { padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-fault { background: #ff1744; color: white; }
+        .btn-reset { background: #29b6f6; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>⚡ GRIDGUARD AI MONITORING SYSTEM</h1>
+        <p>Aurobana Indian School — Transformer Condition Assessment</p>
+    </div>
+
+    <div class="status-box" id="statusCard">
+        <div>TRANSFORMER HEALTH STATUS</div>
+        <div class="status-title" id="statusTxt">LOADING...</div>
+        <div style="font-size: 20px; margin-top: 10px;">Predicted Fault Risk: <span id="riskTxt">0%</span></div>
+    </div>
+
+    <div class="grid">
+        <div class="card">Temperature<div class="val" id="tempVal">0 °C</div></div>
+        <div class="card">Current<div class="val" id="currVal">0 A</div></div>
+        <div class="card">Vibration<div class="val" id="vibVal">0 m/s²</div></div>
+        <div class="card">Gas Indicator<div class="val" id="gasVal">0 %</div></div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-fault" onclick="triggerFault()">⚠️ SIMULATE FAULT</button>
+        <button class="btn-reset" onclick="triggerReset()">🔄 RESET SYSTEM</button>
+    </div>
+
+    <script>
+        async function updateDashboard() {
+            try {
+                let res = await fetch('http://127.0.0.1:5000/api/data');
+                let data = await res.json();
+
+                document.getElementById('tempVal').innerText = data.temp + ' °C';
+                document.getElementById('currVal').innerText = data.current + ' A';
+                document.getElementById('vibVal').innerText = data.vib + ' m/s²';
+                document.getElementById('gasVal').innerText = data.gas + ' %';
+                document.getElementById('riskTxt').innerText = data.risk + '%';
+
+                let statusTxt = document.getElementById('statusTxt');
+                let statusCard = document.getElementById('statusCard');
+
+                statusTxt.innerText = data.status;
+                if (data.status === "NORMAL") {
+                    statusCard.style.border = "2px solid #00e676";
+                    statusTxt.style.color = "#00e676";
+                } else if (data.status === "WARNING") {
+                    statusCard.style.border = "2px solid #ffea00";
+                    statusTxt.style.color = "#ffea00";
+                } else {
+                    statusCard.style.border = "2px solid #ff1744";
+                    statusTxt.style.color = "#ff1744";
+                }
+            } catch (e) {}
+        }
+
+        async function triggerFault() {
+            await fetch('http://127.0.0.1:5000/api/simulate', { method: 'POST' });
+        }
+
+        async function triggerReset() {
+            await fetch('http://127.0.0.1:5000/api/reset', { method: 'POST' });
+        }
+
+        setInterval(updateDashboard, 1000);
+    </script>
+</body>
+</html>
